@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 
-public class SentenceGenerator : MonoBehaviour
+public class SentenceGenerator : NetworkBehaviour
 {
     #region sentences
     private List<string> sentences = new List<string>()
@@ -30,32 +31,44 @@ public class SentenceGenerator : MonoBehaviour
     };
     #endregion
 
-    private string currentSentence;
-    [SerializeField] private TextMeshProUGUI sentenceText;
+    public string currentSentence { get; private set; }
 
-    void Initialize()
-    {
-        // take all sentences, choose 1 to set as current
-        currentSentence = "";
-    }
+    public NetworkVariable<string> Sentence = new NetworkVariable<string>(
+        "",
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+        );
+
+    public TextMeshProUGUI sentenceText;
 
     private void Start()
     {
-        UpdateSentence();
+        //UpdateSentence();
     }
+
+    //[ServerRpc]
+    //private void SetSentenceServerRpc(string newSentence)
+    //{
+    //    Sentence.Value = newSentence;
+    //    Debug.Log($"{Sentence.Value} Sentence set to: {newSentence}");
+    //}
 
     public void UpdateSentence()
     {
         // update current sentecne w new one
         currentSentence = PickSentence();
+        //SetSentenceServerRpc(currentSentence);
+
+        Debug.Log($"currentSentence: {currentSentence}");
+
         UpdateSentenceUI(currentSentence);
+        
     }
 
+    // ________________________________________
     string PickSentence()
     {
         string randomSentence = sentences[Random.Range(0, sentences.Count)];
-
-        currentSentence = randomSentence;
         return randomSentence;
     }
 
@@ -64,4 +77,3 @@ public class SentenceGenerator : MonoBehaviour
         sentenceText.text = sentence;
     }
 }
-// make sure that the Enter key is the 'submit sentence' key for clients

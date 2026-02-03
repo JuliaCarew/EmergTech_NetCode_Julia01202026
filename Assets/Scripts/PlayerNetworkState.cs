@@ -10,11 +10,6 @@ namespace CrocoType.Networking
         public NetworkVariable<int> SelectedTooth = new(-1);
         public NetworkVariable<bool> IsAlive = new(true);
         public NetworkVariable<ulong> OwnerClientId = new(ulong.MaxValue);
-        //public bool IsOwner { get; }
-        //protected bool IsServer { get; }
-        //protected bool IsHost { get; }
-        //protected bool IsClient { get; }
-
 
         // setup
         public void InitializeOwner(ulong clientId)

@@ -4,7 +4,6 @@ using UnityEngine;
 public class Mover : NetworkBehaviour
 {
     private Vector2 moveVector;
-    private bool isMoving;
     private Rigidbody2D rb;
 
     void Start()
