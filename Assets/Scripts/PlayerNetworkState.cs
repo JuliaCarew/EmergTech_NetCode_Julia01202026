@@ -6,10 +6,15 @@ namespace CrocoType.Networking
     public class PlayerNetworkState : NetworkBehaviour
     {
         // synced state
-        public NetworkVariable<int>    CorrectCharCount  = new(0);
-        public NetworkVariable<int>    SelectedTooth     = new(-1);
-        public NetworkVariable<bool>   IsAlive           = new(true);
-        public NetworkVariable<ulong>  OwnerClientId     = new(ulong.MaxValue);
+        public NetworkVariable<int> CorrectCharCount = new(0);
+        public NetworkVariable<int> SelectedTooth = new(-1);
+        public NetworkVariable<bool> IsAlive = new(true);
+        public NetworkVariable<ulong> OwnerClientId = new(ulong.MaxValue);
+        //public bool IsOwner { get; }
+        //protected bool IsServer { get; }
+        //protected bool IsHost { get; }
+        //protected bool IsClient { get; }
+
 
         // setup
         public void InitializeOwner(ulong clientId)
@@ -17,14 +22,14 @@ namespace CrocoType.Networking
             OwnerClientId.Value = clientId;
         }
 
-        // ── per-round reset (called by server)
+        // per-round reset (called by server)
         public void ResetForNewRound()
         {
             CorrectCharCount.Value = 0;
             SelectedTooth.Value    = -1;
         }
 
-        // ── update helpers
+        // update helpers
         public void UpdateCorrectCharCount(int count)
         {
             CorrectCharCount.Value = count;
