@@ -3,6 +3,25 @@ using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
+// Custom serializable wrapper for strings in NetworkVariables
+public struct NetworkString : INetworkSerializable
+{
+    public string Value;
+
+    public NetworkString(string value)
+    {
+        Value = value;
+    }
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref Value);
+    }
+
+    public static implicit operator string(NetworkString networkString) => networkString.Value;
+    public static implicit operator NetworkString(string value) => new NetworkString(value);
+}
+
 public class SentenceGenerator : NetworkBehaviour
 {
     #region sentences
@@ -13,7 +32,7 @@ public class SentenceGenerator : NetworkBehaviour
         "Please put on these earmuffs because I can't you hear",
         "He said he was not there yesterday; however, many people saw him there",
         "It would have been a better night if the guys next to us weren't in the splash zone",
-        "The hawk didn’t understand why the ground squirrels didn’t want to be his friend",
+        "The hawk didnï¿½t understand why the ground squirrels didnï¿½t want to be his friend",
         "The tattered work gloves speak of the many hours of hard labor he endured throughout his life",
         "I love bacon, beer, birds, and baboons",
         "It isn't true that my mattress is made of cotton candy",
@@ -33,36 +52,72 @@ public class SentenceGenerator : NetworkBehaviour
 
     public string currentSentence { get; private set; }
 
-    public NetworkVariable<string> Sentence = new NetworkVariable<string>(
-        "",
+    public NetworkVariable<NetworkString> Sentence = new NetworkVariable<NetworkString>(
+        new NetworkString(""),
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
         );
 
     public TextMeshProUGUI sentenceText;
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
-        //UpdateSentence();
+        base.OnNetworkSpawn();
+        
+        // Subscribe to NetworkVariable changes so all clients update when sentence changes
+        Sentence.OnValueChanged += OnSentenceChanged;
+        
+        // Update UI with current NetworkVariable value if it exists
+        if (Sentence.Value.Value != "")
+        {
+            OnSentenceChanged(new NetworkString(""), Sentence.Value);
+        }
+        
+        Debug.Log($"SentenceGenerator OnNetworkSpawn - IsServer: {IsServer}, Sentence.Value: '{Sentence.Value.Value}'");
     }
 
-    //[ServerRpc]
-    //private void SetSentenceServerRpc(string newSentence)
-    //{
-    //    Sentence.Value = newSentence;
-    //    Debug.Log($"{Sentence.Value} Sentence set to: {newSentence}");
-    //}
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        Sentence.OnValueChanged -= OnSentenceChanged;
+    }
+
+    private void OnSentenceChanged(NetworkString previousValue, NetworkString newValue)
+    {
+        currentSentence = newValue.Value;
+        Debug.Log($"OnSentenceChanged called - Previous: '{previousValue.Value}', New: '{newValue.Value}'");
+        
+        if (sentenceText != null)
+        {
+            UpdateSentenceUI(newValue.Value);
+            Debug.Log($"UI updated with sentence: '{newValue.Value}'");
+        }
+        else
+        {
+            Debug.LogError("sentenceText is null! Make sure it's assigned in the Inspector.");
+        }
+    }
 
     public void UpdateSentence()
     {
-        // update current sentecne w new one
-        currentSentence = PickSentence();
-        //SetSentenceServerRpc(currentSentence);
+        // Only server can update the sentence
+        if (!IsServer)
+        {
+            Debug.LogWarning("Only server can update the sentence!");
+            return;
+        }
 
-        Debug.Log($"currentSentence: {currentSentence}");
-
-        UpdateSentenceUI(currentSentence);
+        // Pick a new sentence and set it on the NetworkVariable
+        string newSentence = PickSentence();
+        Sentence.Value = new NetworkString(newSentence);
         
+        Debug.Log($"Server set sentence to: '{newSentence}'");
+        
+        // Also update UI immediately on server (clients will get it via OnValueChanged)
+        if (sentenceText != null)
+        {
+            UpdateSentenceUI(newSentence);
+        }
     }
 
     // ________________________________________
@@ -74,6 +129,13 @@ public class SentenceGenerator : NetworkBehaviour
 
     void UpdateSentenceUI(string sentence)
     {
+        if (sentenceText == null)
+        {
+            Debug.LogError("sentenceText is null! Cannot update UI.");
+            return;
+        }
+        
         sentenceText.text = sentence;
+        Debug.Log($"UpdateSentenceUI called with: '{sentence}'");
     }
 }

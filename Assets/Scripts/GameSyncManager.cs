@@ -18,6 +18,8 @@ namespace CrocoType.Networking
 
     public class GameSyncManager : NetworkBehaviour
     {
+        [SerializeField] private SentenceGenerator _sentenceGenerator;
+
         public NetworkVariable<int> CurrentRound = new(0);
         public NetworkVariable<GamePhase> CurrentPhase = new(GamePhase.Waiting);
 
@@ -68,9 +70,46 @@ namespace CrocoType.Networking
             OnCountdownUpdate?.Invoke(secondsLeft);
         }
 
-        public void BroadcastRoundStart(string sentence, int roundNumber)
+        public void BroadcastRoundStart(int roundNumber)
         {
-            RpcRoundStartClientRpc(sentence, roundNumber);
+            Debug.Log($"BroadcastRoundStart called with roundNumber: {roundNumber}, IsServer: {IsServer}");
+            
+            // Only server can generate and broadcast sentences
+            if (!IsServer)
+            {
+                Debug.LogWarning("Only server can broadcast round start!");
+                return;
+            }
+
+            // Generate a new sentence for this round
+            if (_sentenceGenerator != null)
+            {
+                Debug.Log("Calling UpdateSentence on SentenceGenerator...");
+                _sentenceGenerator.UpdateSentence();
+                // Get the generated sentence from the NetworkVariable
+                string sentence = _sentenceGenerator.Sentence.Value.Value;
+                Debug.Log($"Broadcasting sentence to clients: '{sentence}'");
+                RpcRoundStartClientRpc(sentence, roundNumber);
+            }
+            else
+            {
+                Debug.LogError("SentenceGenerator is not assigned in GameSyncManager!");
+            }
+        }
+
+        // Test method to start a round (for testing purposes)
+        [ContextMenu("Test: Start Round 1")]
+        public void TestStartRound()
+        {
+            if (IsServer)
+            {
+                IncrementRound();
+                BroadcastRoundStart(CurrentRound.Value);
+            }
+            else
+            {
+                Debug.LogWarning("TestStartRound can only be called on server!");
+            }
         }
 
         [ClientRpc]

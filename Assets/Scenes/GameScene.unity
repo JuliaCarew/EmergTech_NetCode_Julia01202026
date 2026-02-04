@@ -1041,9 +1041,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 617583329}
-        m_TargetAssemblyTypeName: SentenceGenerator, Assembly-CSharp
-        m_MethodName: UpdateSentence
+      - m_Target: {fileID: 997977478}
+        m_TargetAssemblyTypeName: CrocoType.Networking.GameSyncManager, Assembly-CSharp
+        m_MethodName: TestStartRound
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1235,8 +1235,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  Sentence:
-    m_InternalValue: 
   sentenceText: {fileID: 1301139836}
 --- !u!4 &617583330
 Transform:
@@ -1963,6 +1961,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  _sentenceGenerator: {fileID: 617583329}
   CurrentRound:
     m_InternalValue: 0
   CurrentPhase:
@@ -2536,6 +2535,8 @@ MonoBehaviour:
   serverBtn: {fileID: 1140926484}
   hostBtn: {fileID: 66761470}
   clientBtn: {fileID: 808585462}
+  testGenerateSentenceBtn: {fileID: 546407065}
+  gameSyncManager: {fileID: 997977478}
 --- !u!1 &1493788450
 GameObject:
   m_ObjectHideFlags: 0
@@ -3116,7 +3117,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Sentence
+  m_text: Test Round 1
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

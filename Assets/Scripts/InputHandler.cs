@@ -23,7 +23,8 @@ public class InputHandler : MonoBehaviour
     public void ValidateInput()
     {
         string input = inputField.text;
-        string checkSentence = stnGenerator.currentSentence;
+        // Use the NetworkVariable value so all clients check against the same synchronized sentence
+        string checkSentence = stnGenerator.Sentence.Value.Value;
 
         // check if input is exact string from sentence generator
         if (input != checkSentence) 
