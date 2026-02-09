@@ -18,12 +18,14 @@ namespace CrocoType.Networking
 
     public class GameSyncManager : NetworkBehaviour
     {
-        [SerializeField] private SentenceGenerator _sentenceGenerator;
-
-        public NetworkVariable<int> CurrentRound = new(0);
-        public NetworkVariable<GamePhase> CurrentPhase = new(GamePhase.Waiting);
+        public NetworkVariable<int>       CurrentRound    = new(0);
+        public NetworkVariable<GamePhase> CurrentPhase    = new(GamePhase.Waiting);
 
         private readonly Dictionary<ulong, Player> _players = new();
+
+        private TypingState _typingState; 
+
+        public void SetTypingState(TypingState typingState) => _typingState = typingState;
 
         public void RegisterPlayer(Player player)
         {
@@ -35,12 +37,10 @@ namespace CrocoType.Networking
             _players.Remove(clientId);
         }
 
-        public Player                          
-            GetPlayerByClientId(ulong id) =>
+        public Player                          GetPlayerByClientId(ulong id) =>
             _players.TryGetValue(id, out var p) ? p : null;
 
-        public IEnumerable<Player>             
-            GetAlivePlayers() =>
+        public IEnumerable<Player>             GetAlivePlayers() =>
             _players.Values.Where(p => p.IsAlive);
 
         public int ConnectedPlayerCount => _players.Count;
@@ -50,7 +50,11 @@ namespace CrocoType.Networking
         public void BroadcastGamePhase(GamePhase phase)
         {
             CurrentPhase.Value = phase;
-            RpcNotifyPhaseChangeClientRpc(phase);
+            // Only send RPC if NetworkManager is started and we're on the server
+            if (IsServer && IsSpawned)
+            {
+                RpcNotifyPhaseChangeClientRpc(phase);
+            }
         }
 
         [ClientRpc]
@@ -61,7 +65,11 @@ namespace CrocoType.Networking
 
         public void BroadcastCountdown(float secondsLeft)
         {
-            RpcCountdownClientRpc(secondsLeft);
+            // Only send RPC if NetworkManager is started and we're on the server
+            if (IsServer && IsSpawned)
+            {
+                RpcCountdownClientRpc(secondsLeft);
+            }
         }
 
         [ClientRpc]
@@ -70,45 +78,12 @@ namespace CrocoType.Networking
             OnCountdownUpdate?.Invoke(secondsLeft);
         }
 
-        public void BroadcastRoundStart(int roundNumber)
+        public void BroadcastRoundStart(string sentence, int roundNumber)
         {
-            Debug.Log($"BroadcastRoundStart called with roundNumber: {roundNumber}, IsServer: {IsServer}");
-            
-            // Only server can generate and broadcast sentences
-            if (!IsServer)
+            // Only send RPC if NetworkManager is started and we're on the server
+            if (IsServer && IsSpawned)
             {
-                Debug.LogWarning("Only server can broadcast round start!");
-                return;
-            }
-
-            // Generate a new sentence for this round
-            if (_sentenceGenerator != null)
-            {
-                Debug.Log("Calling UpdateSentence on SentenceGenerator...");
-                _sentenceGenerator.UpdateSentence();
-                // Get the generated sentence from the NetworkVariable
-                string sentence = _sentenceGenerator.Sentence.Value.Value;
-                Debug.Log($"Broadcasting sentence to clients: '{sentence}'");
                 RpcRoundStartClientRpc(sentence, roundNumber);
-            }
-            else
-            {
-                Debug.LogError("SentenceGenerator is not assigned in GameSyncManager!");
-            }
-        }
-
-        // Test method to start a round (for testing purposes)
-        [ContextMenu("Test: Start Round 1")]
-        public void TestStartRound()
-        {
-            if (IsServer)
-            {
-                IncrementRound();
-                BroadcastRoundStart(CurrentRound.Value);
-            }
-            else
-            {
-                Debug.LogWarning("TestStartRound can only be called on server!");
             }
         }
 
@@ -190,6 +165,7 @@ namespace CrocoType.Networking
         public void SubmitTypingInputServerRpc(string typedSoFar, float timestamp, ServerRpcParams rpcParams = default)
         {
             ulong clientId = rpcParams.Receive.SenderClientId;
+            _typingState?.HandlePlayerInput(clientId, typedSoFar, timestamp);
         }
 
         [ServerRpc]
@@ -199,16 +175,21 @@ namespace CrocoType.Networking
             OnToothSelectionReceived?.Invoke(clientId, toothIndex);
         }
 
-        // events
-        public event System.Action<GamePhase> OnPhaseChanged;
-        public event System.Action<float> OnCountdownUpdate;
-        public event System.Action<string, int> OnRoundStart; // sentence, round
-        public event System.Action<ulong> OnWinnerAnnounced;
-        public event System.Action<int> OnToothPhaseStart; // toothCount
-        public event System.Action<ulong, int> OnToothSelected; // clientId, index
-        public event System.Action<int> OnLethalToothRevealed;
-        public event System.Action<ulong> OnGameOver; // winner clientId
-        public event System.Action<ulong[]> OnPlayerStatesSync;
-        public event System.Action<ulong, int> OnToothSelectionReceived; // server-side routing
+        public void TestStartRound(string sentence)
+        {
+            BroadcastRoundStart(sentence, CurrentRound.Value);
+        }
+
+        // ── events (UI and states subscribe to these) ──────────────────────
+        public event System.Action<GamePhase>              OnPhaseChanged;
+        public event System.Action<float>                  OnCountdownUpdate;
+        public event System.Action<string, int>            OnRoundStart;        // sentence, round
+        public event System.Action<ulong>                  OnWinnerAnnounced;
+        public event System.Action<int>                    OnToothPhaseStart;   // toothCount
+        public event System.Action<ulong, int>             OnToothSelected;     // clientId, index
+        public event System.Action<int>                    OnLethalToothRevealed;
+        public event System.Action<ulong>                  OnGameOver;          // winner clientId
+        public event System.Action<ulong[]>                OnPlayerStatesSync;
+        public event System.Action<ulong, int>             OnToothSelectionReceived; // server-side routing
     }
 }

@@ -17,11 +17,6 @@ public class ButtonController : MonoBehaviour
         serverBtn.onClick.AddListener(StartServer);
         hostBtn.onClick.AddListener(StartHost);
         clientBtn.onClick.AddListener(StartClient);
-        
-        if (testGenerateSentenceBtn != null)
-        {
-            testGenerateSentenceBtn.onClick.AddListener(TestGenerateSentence);
-        }
     }
 
     private void StartServer()
@@ -100,7 +95,7 @@ public class ButtonController : MonoBehaviour
     {
         if (gameSyncManager != null)
         {
-            gameSyncManager.TestStartRound();
+            gameSyncManager.TestStartRound("This is a test sentence.");
         }
         else
         {

@@ -1,7 +1,8 @@
+using CrocoType.Interfaces;
 
 namespace CrocoType.Domain
 {
-    public class Player 
+    public class Player : ITypingParticipant, IEliminable, IToothSelector
     {
         // identity
         public ulong ClientId { get; }

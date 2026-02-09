@@ -970,6 +970,7 @@ GameObject:
   - component: {fileID: 546407067}
   - component: {fileID: 546407066}
   - component: {fileID: 546407065}
+  - component: {fileID: 546407068}
   m_Layer: 0
   m_Name: sentenceBtn
   m_TagString: Untagged
@@ -1040,19 +1041,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 546407066}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 997977478}
-        m_TargetAssemblyTypeName: CrocoType.Networking.GameSyncManager, Assembly-CSharp
-        m_MethodName: TestStartRound
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &546407066
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1091,6 +1080,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 546407063}
   m_CullTransparentMesh: 1
+--- !u!114 &546407068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 546407063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79b92cd2e5cd2b74b9e80b9ab065b67a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startButton: {fileID: 546407065}
+  sentenceGenerator: {fileID: 617583329}
+  stateMachine: {fileID: 997977479}
 --- !u!1001 &595148296
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1961,7 +1965,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  _sentenceGenerator: {fileID: 617583329}
   CurrentRound:
     m_InternalValue: 0
   CurrentPhase:
@@ -3117,7 +3120,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Test Round 1
+  m_text: Start Round
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
