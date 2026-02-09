@@ -1,9 +1,10 @@
-using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.UI;
+using static UnityEngine.Rendering.DebugUI;
 
 public class InputHandler : MonoBehaviour
 {
@@ -39,7 +40,19 @@ public class InputHandler : MonoBehaviour
             resultText.color = Color.green;
             Debug.Log("Right input");
         }
+
+        // need to check if the player's string sentence contains a wrong character
+        if (!checkSentence.Contains(input))
+        {
+            UpdateWrongCharacters(input);
+        }
     }
 
+    private void UpdateWrongCharacters(string wrongChar)
+    {
+        // after player submits guess, set highlight color to red
+        //wrongChar.text.color = Color.cyan;
+        //inputField.text.color = Color.red;
+        Debug.Log("INPUT: updating wrong characters");
+    }
 }
-// wrong characters highlighted in red

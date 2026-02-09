@@ -125,7 +125,7 @@ public class SentenceGenerator : NetworkBehaviour
     {
         string randomSentence = sentences[Random.Range(0, sentences.Count)];
         return randomSentence;
-    }
+    }    
 
     void UpdateSentenceUI(string sentence)
     {
