@@ -118,14 +118,26 @@ namespace CrocoType.Networking
 
         public void BroadcastToothPhaseStart(int toothCount)
         {
-            // Convert HashSet to array for RPC
-            int[] previouslySelectedArray = _previouslySelectedTeeth.ToArray();
-            RpcToothPhaseStartClientRpc(toothCount, previouslySelectedArray);
+            Debug.Log($"GameSyncManager: BroadcastToothPhaseStart called with toothCount={toothCount}, IsServer={IsServer}, IsSpawned={IsSpawned}");
+            
+            // Only send RPC if NetworkManager is started
+            if (IsServer && IsSpawned)
+            {
+                // Convert HashSet to array for RPC
+                int[] previouslySelectedArray = _previouslySelectedTeeth.ToArray();
+                Debug.Log($"GameSyncManager: Sending RpcToothPhaseStartClientRpc with {toothCount} teeth and {previouslySelectedArray.Length} previously selected teeth");
+                RpcToothPhaseStartClientRpc(toothCount, previouslySelectedArray);
+            }
+            else
+            {
+                Debug.LogWarning($"GameSyncManager: Cannot broadcast tooth phase start - IsServer={IsServer}, IsSpawned={IsSpawned}");
+            }
         }
 
         [ClientRpc]
         private void RpcToothPhaseStartClientRpc(int toothCount, int[] previouslySelectedTeeth)
         {
+            Debug.Log($"GameSyncManager: RpcToothPhaseStartClientRpc received on client {NetworkManager.Singleton?.LocalClientId ?? ulong.MaxValue}, toothCount={toothCount}, previouslySelectedCount={previouslySelectedTeeth?.Length ?? 0}");
             OnToothPhaseStart?.Invoke(toothCount, previouslySelectedTeeth);
         }
 

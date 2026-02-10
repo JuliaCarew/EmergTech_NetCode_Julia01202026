@@ -144,74 +144,97 @@ public class PlayerIconSelection : MonoBehaviour
 
     private void OnConfirmClicked()
     {
+        Debug.Log("PlayerIconSelection: Confirm button clicked!");
+        
         if (selectedIcon == null || iconBytes == null)
         {
             Debug.LogWarning("No icon selected!");
             return;
         }
 
-        // Store the icon for this player
-        PlayerIconManager.Instance.SetLocalPlayerIcon(iconBytes);
-
-        // Start network connection
+        // Verify network is already running (should be started via Relay before reaching this screen)
         if (NetworkManager.Singleton == null)
         {
-            Debug.LogError("NetworkManager.Singleton is null!");
+            Debug.LogError("NetworkManager.Singleton is null! Network should already be started via Relay.");
             return;
         }
 
-        // Shutdown any existing connection
-        if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost)
+        // Check if network is actually running
+        if (!NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost)
         {
-            NetworkManager.Singleton.Shutdown();
+            Debug.LogError("Network is not running! Should be started via Relay before icon selection.");
+            return;
         }
 
-        bool success = false;
-        if (isHost)
+        // Store the icon for this player
+        if (PlayerIconManager.Instance != null)
         {
-            success = NetworkManager.Singleton.StartHost();
-            if (success)
-                Debug.Log("Host started with icon!");
+            PlayerIconManager.Instance.SetLocalPlayerIcon(iconBytes);
         }
         else
         {
-            success = NetworkManager.Singleton.StartClient();
-            if (success)
-                Debug.Log("Client started with icon!");
+            Debug.LogWarning("PlayerIconManager.Instance is null!");
         }
 
-        if (success)
+        Debug.Log($"PlayerIconSelection: Network already running as {(isHost ? "host" : "client")}, sending icon");
+        
+        // Try to find GameSyncManager if not assigned
+        if (gameSyncManager == null)
         {
-            Debug.Log($"PlayerIconSelection: Network started successfully as {(isHost ? "host" : "client")}, starting icon send coroutine");
-            // Send icon to server
-            if (gameSyncManager != null)
+            gameSyncManager = FindObjectOfType<GameSyncManager>();
+            if (gameSyncManager == null)
             {
-                // Wait for network spawn, then send icon
-                StartCoroutine(SendIconAfterSpawn());
-            }
-            else
-            {
-                Debug.LogWarning("PlayerIconSelection: gameSyncManager is null, cannot send icon");
-                // Show gameplay screen anyway
-                if (mainMenu != null)
-                    mainMenu.OnIconSelected();
+                Debug.LogWarning("PlayerIconSelection: gameSyncManager not found, will try to find it in coroutine");
             }
         }
+        
+        // Always start the coroutine - it will handle finding GameSyncManager and has a timeout
+        StartCoroutine(SendIconAndProceedToGameplay());
     }
 
-    private System.Collections.IEnumerator SendIconAfterSpawn()
+    private System.Collections.IEnumerator SendIconAndProceedToGameplay()
     {
-        // Wait for GameSyncManager to be spawned
-        while (gameSyncManager == null || !gameSyncManager.IsSpawned)
+        Debug.Log("PlayerIconSelection: Starting SendIconAndProceedToGameplay coroutine");
+        
+        // Try to find GameSyncManager if not already found
+        float timeout = 10f; // 10 second timeout
+        float elapsed = 0f;
+        
+        while (gameSyncManager == null && elapsed < timeout)
         {
-            yield return new WaitForSeconds(0.1f);
+            gameSyncManager = FindObjectOfType<GameSyncManager>();
+            if (gameSyncManager == null)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsed += 0.1f;
+            }
+        }
+        
+        // Wait for GameSyncManager to be spawned (if found)
+        if (gameSyncManager != null)
+        {
+            elapsed = 0f;
+            while (!gameSyncManager.IsSpawned && elapsed < timeout)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsed += 0.1f;
+            }
+            
+            if (!gameSyncManager.IsSpawned)
+            {
+                Debug.LogWarning("PlayerIconSelection: GameSyncManager not spawned after timeout, proceeding anyway");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("PlayerIconSelection: GameSyncManager not found after timeout, proceeding without it");
         }
 
-        // Wait for network to be fully ready
+        // Wait a bit for network to be fully ready
         yield return new WaitForSeconds(0.5f);
 
         // Get local client ID
-        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        ulong localClientId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : 0;
         
         Debug.Log($"PlayerIconSelection: Preparing to send icon for client {localClientId}, iconBytes length: {(iconBytes != null ? iconBytes.Length : 0)}");
         
@@ -222,16 +245,34 @@ public class PlayerIconSelection : MonoBehaviour
             Debug.Log($"Set local player icon for client ID: {localClientId}");
         }
 
-        // Send icon via RPC to sync with other clients
-        if (gameSyncManager != null && iconBytes != null)
+        // Send icon via RPC to sync with other clients (if GameSyncManager is available)
+        if (gameSyncManager != null && iconBytes != null && gameSyncManager.IsSpawned)
         {
-            Debug.Log($"PlayerIconSelection: Sending icon via RPC for client {localClientId}");
-            gameSyncManager.SetPlayerIconServerRpc(iconBytes);
-            Debug.Log($"Sent icon via RPC for client ID: {localClientId}");
+            try
+            {
+                Debug.Log($"PlayerIconSelection: Sending icon via RPC for client {localClientId}");
+                gameSyncManager.SetPlayerIconServerRpc(iconBytes);
+                Debug.Log($"Sent icon via RPC for client ID: {localClientId}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"PlayerIconSelection: Error sending icon via RPC: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("PlayerIconSelection: Skipping RPC send - gameSyncManager is null, not spawned, or iconBytes is null");
         }
 
-        // Show gameplay screen
+        // Always show gameplay screen, even if GameSyncManager wasn't found
+        Debug.Log("PlayerIconSelection: Proceeding to gameplay screen");
         if (mainMenu != null)
+        {
             mainMenu.OnIconSelected();
+        }
+        else
+        {
+            Debug.LogError("PlayerIconSelection: mainMenu is null! Cannot proceed to gameplay screen!");
+        }
     }
 }

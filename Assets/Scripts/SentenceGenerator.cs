@@ -105,6 +105,11 @@ public class SentenceGenerator : NetworkBehaviour
 
         // Pick a new sentence and set it on the NetworkVariable
         string newSentence = PickSentence();
+        
+        // Set currentSentence immediately (before NetworkVariable update)
+        // so it's available synchronously for TypingState
+        currentSentence = newSentence;
+        
         Sentence.Value = new NetworkString(newSentence);
         
         Debug.Log($"Server set sentence to: '{newSentence}'");

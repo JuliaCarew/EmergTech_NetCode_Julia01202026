@@ -39,16 +39,25 @@ namespace CrocoType.States
             _winnerClientId = ulong.MaxValue; 
             _roundEnded = false;
 
-            // Get sentence from SentenceGenerator (generate one if it doesn't have one)
+            // Get sentence from SentenceGenerator - always generate a new sentence for each round
             var sentenceGenerator = Object.FindObjectOfType<SentenceGenerator>();
             if (sentenceGenerator != null)
             {
-                // If SentenceGenerator doesn't have a sentence, generate one
-                if (string.IsNullOrEmpty(sentenceGenerator.Sentence.Value.Value))
+                // Always update the sentence for a new round (server only)
+                if (SyncManager.IsServer)
                 {
                     sentenceGenerator.UpdateSentence();
+                    // Read the sentence directly from the generator's currentSentence property
+                    // which is updated synchronously in UpdateSentence()
+                    _currentSentence = sentenceGenerator.currentSentence;
+                    Debug.Log($"TypingState: Enter() - Set new sentence for round {SyncManager.CurrentRound.Value}: '{_currentSentence}'");
                 }
-                _currentSentence = sentenceGenerator.Sentence.Value.Value;
+                else
+                {
+                    // On clients, read from NetworkVariable (will be updated via RPC)
+                    _currentSentence = sentenceGenerator.Sentence.Value.Value;
+                    Debug.Log($"TypingState: Enter() - Client reading sentence: '{_currentSentence}'");
+                }
             }
             else
             {
