@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System;
 using TMPro;
 using Unity.Services.Core;
 using Unity.Services.Authentication;
@@ -9,9 +10,18 @@ using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Relay;
+using System.Net;
+using Unity.Networking.Transport;
 
 public class RelayManager : MonoBehaviour
 {
+    public bool connectViaIP = false;
+    public string ipv4Address;
+    string listenAddress = null;
+    [SerializeField] private TMP_InputField ipInputField;
+    [SerializeField] private TextMeshProUGUI test;
+    //string externalip = new WebClient().DownloadString("https://icanhazip.com");
+
     [SerializeField] private TextMeshProUGUI joinCodeText;
     [SerializeField] private TMP_InputField joinCodeInputField;
 
@@ -27,6 +37,11 @@ public class RelayManager : MonoBehaviour
         await UnityServices.InitializeAsync();
 
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+
+        if (connectViaIP)
+        {
+            HostWithIP();
+        }
     }
 
     public async void StartRelay()
@@ -179,5 +194,49 @@ public class RelayManager : MonoBehaviour
             Debug.LogError($"Exception in StartClient when joining with code '{joinCode}': {e.GetType().Name} - {e.Message}");
             throw; // Re-throw to be caught by JoinRelay
         }
+    }
+
+    // if IP is enabled, get local IP & assign host an IP, then each player has their own
+    public async void StartHostWithIP()
+    {
+        string joinCode = await HostWithIP();
+
+        if (!string.IsNullOrEmpty(joinCode) && joinCodeText != null)
+        {
+            test.text = $"Join Code: {joinCode}";
+            Debug.Log($"Relay host started! Join Code: {joinCode}");
+        }
+    }
+    public async Task<string> HostWithIP(int maxConnections = 3)
+    {
+        Allocation allocation = await Unity.Services.Relay.RelayService.Instance.CreateAllocationAsync(maxConnections);
+
+        UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        //transport.ConnectionData.Protocol
+
+        string joinCode = "10.43.101.69"; // get local ip as join code
+        test.text = joinCode;
+
+        transport.SetRelayServerData(new RelayServerData(allocation, joinCode));
+
+        bool hostStarted = NetworkManager.Singleton.StartServer();
+        return hostStarted ? joinCode : null;
+        
+    }
+    // for clients, check if ipInputField text is same as client joinCode
+    ushort port = 7777;
+    NetworkDriver driver;
+    NetworkConnection connection;
+
+    public void JoinWithIP(string joinCode)
+    {
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes("10.43.101.69");
+
+        // check input field
+        string input = ipInputField.text;
+        // if(input = "10.43.101.69")
+        NetworkManager.Singleton.StartClient();
+
+        Debug.Log("attempting to connect to server");
     }
 }
