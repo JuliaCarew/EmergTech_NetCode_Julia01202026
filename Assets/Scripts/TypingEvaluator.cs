@@ -21,7 +21,7 @@ namespace CrocoType.Domain
                 if (typed[i] == target[i])
                     count++;
                 else
-                    break; // first mismatch ends the correct prefix
+                    break; 
             }
 
             return count;

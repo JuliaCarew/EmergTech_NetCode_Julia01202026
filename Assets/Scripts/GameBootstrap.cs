@@ -1,9 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using CrocoType.Domain;
-using CrocoType.Interfaces;
 using CrocoType.Networking;
-using CrocoType.Providers;
 using CrocoType.States;
 
 namespace CrocoType
@@ -22,13 +20,11 @@ namespace CrocoType
     
     private void Awake()
     {
-        ISentenceProvider sentenceProvider = new SentenceProvider();
-
         _toothManager = new ToothManager();
 
         // set up states
         _waitingState = new WaitingState(_stateMachine, _syncManager);
-        _typingState = new TypingState(_stateMachine, _syncManager, sentenceProvider);
+        _typingState = new TypingState(_stateMachine, _syncManager);
         _toothPickState = new ToothPickState(_stateMachine, _syncManager, _toothManager);
         _eliminationState = new EliminationState(_stateMachine, _syncManager, _toothManager);
 
@@ -59,7 +55,6 @@ namespace CrocoType
 
     private void Update()
     {
-        // Fallback: Check if we can initialize the state (in case OnServerStarted was missed or timing is off)
         if (!_statesInitialized && NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
             TryInitializeState();

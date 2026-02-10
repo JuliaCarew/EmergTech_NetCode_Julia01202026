@@ -16,11 +16,11 @@ namespace CrocoType.Domain
                            float  typingTimeLimit    = 30f,
                            float  toothPickTimeLimit = 10f)
         {
-            RoundNumber        = roundNumber;
-            Sentence           = sentence;
-            DifficultyTier     = difficultyTier;
-            ToothCount         = toothCount;
-            TypingTimeLimit    = typingTimeLimit;
+            RoundNumber = roundNumber;
+            Sentence = sentence;
+            DifficultyTier = difficultyTier;
+            ToothCount = toothCount;
+            TypingTimeLimit = typingTimeLimit;
             ToothPickTimeLimit = toothPickTimeLimit;
         }
 

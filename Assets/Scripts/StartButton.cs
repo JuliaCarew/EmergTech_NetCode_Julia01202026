@@ -8,7 +8,6 @@ public class StartButton : MonoBehaviour
     [SerializeField] private Button startButton;
     [SerializeField] private SentenceGenerator sentenceGenerator;
     [SerializeField] private GameStateMachine stateMachine;
-    //[SerializeField] private GameSyncManager syncManager;
 
     private void Start()
     {
@@ -75,10 +74,6 @@ public class StartButton : MonoBehaviour
             if (typingState != null)
             {
                 stateMachine.SetState(typingState);
-            }
-            else
-            {
-                Debug.LogError("TypingState not found in state machine!");
             }
         }
     }

@@ -7,7 +7,7 @@ namespace CrocoType.States
     {
         // config
         private const int   MinPlayersRequired = 2;
-        private const float CountdownDuration  = 3.0f; // seconds shown on screen
+        private const float CountdownDuration  = 3.0f; 
 
         // runtime
         private float _countdownRemaining;
@@ -35,20 +35,18 @@ namespace CrocoType.States
 
         public override void Update()
         {
-            // --- gate: not enough players yet ---
             if (SyncManager.ConnectedPlayerCount < MinPlayersRequired)
                 return;
 
-            // --- start countdown the first frame we have enough players ---
             if (!_countdownStarted)
             {
                 _countdownStarted = true;
                 SyncManager.BroadcastCountdown(_countdownRemaining);
             }
 
-            // --- tick down ---
+            // tick down to next phase
             _countdownRemaining -= UnityEngine.Time.deltaTime;
-            SyncManager.BroadcastCountdown(_countdownRemaining); // keeps clients in sync
+            SyncManager.BroadcastCountdown(_countdownRemaining); 
 
             if (_countdownRemaining <= 0f)
                 TransitionTo(_typingState);

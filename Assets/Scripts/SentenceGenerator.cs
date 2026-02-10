@@ -92,10 +92,6 @@ public class SentenceGenerator : NetworkBehaviour
             UpdateSentenceUI(newValue.Value);
             Debug.Log($"UI updated with sentence: '{newValue.Value}'");
         }
-        else
-        {
-            Debug.LogError("sentenceText is null! Make sure it's assigned in the Inspector.");
-        }
     }
 
     public void UpdateSentence()

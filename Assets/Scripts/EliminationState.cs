@@ -54,8 +54,6 @@ namespace CrocoType.States
                 SyncManager.IncrementRound();
                 SyncManager.BroadcastGamePhase(GamePhase.Elimination);
                 
-                // transition back to waiting after a brief delay
-                // For now, we'll transition immediately - you can add a delay if needed
                 TransitionTo(_waitingState);
             }
         }
